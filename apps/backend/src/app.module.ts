@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheService } from './common/cache.service';
+import { User } from './entities';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { dataSourceOptions } from './data-source';
@@ -24,6 +25,7 @@ import { StaffModule } from './modules/staff/staff.module';
     ConfigModule.forRoot({ isGlobal: true }),
 
     TypeOrmModule.forRoot(dataSourceOptions),
+    TypeOrmModule.forFeature([User]),
 
     JwtModule.registerAsync({
       global: true,
