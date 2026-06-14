@@ -20,9 +20,13 @@ export class RealtimeService {
     requesterId: string,
     requestId: string,
     event: RequestUpdateEvent,
+    staffId?: string | null,
   ): void {
     this.gateway.emit(Rooms.request(requestId), SocketEvents.RequestUpdate, event);
     this.gateway.emit(Rooms.user(requesterId), SocketEvents.RequestUpdate, event);
+    if (staffId) {
+      this.gateway.emit(Rooms.user(staffId), SocketEvents.RequestUpdate, event);
+    }
   }
 
   emitComplimentNew(c: ComplimentDto): void {

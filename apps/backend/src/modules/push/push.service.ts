@@ -58,31 +58,33 @@ export class PushService implements OnModuleInit {
           JSON.stringify(payload),
         );
       } catch (err: unknown) {
-        const status = (err as { statusCode?: number })?.statusCode;
+        const e = err as { statusCode?: number; body?: string; headers?: unknown };
+        const status = e?.statusCode;
+        this.logger.error(`Push send failed — status: ${status}, body: ${e?.body}, endpoint: ${sub.endpoint.slice(0, 60)}`);
         if (status === 404 || status === 410) {
           await this.subs.delete(sub.id);
           this.logger.debug(`Removed stale push subscription ${sub.endpoint}`);
-        } else {
-          this.logger.warn(`Push send failed for ${sub.endpoint}: ${String(err)}`);
         }
       }
     }
   }
 
-  async notifyNewRequest(request: RequestDto, staffUserIds: string[]): Promise<void> {
+  async notifyNewRequest(request: RequestDto, staffUserIds: string[], apiBase?: string): Promise<void> {
     const category = request.category?.name ?? 'Request';
+    const base = apiBase ?? this.apiBase;
     const payload: PushPayload = {
       type: 'request:new',
       title: `${request.category?.icon ?? '🔔'} New ${category}`,
       body: `${request.requester.name}: ${request.description}`,
       url: `/requests/${request.id}`,
+      fullUrl: `${base}/requests/${request.id}`,
       requestId: request.id,
-      apiBase: this.apiBase,
+      apiBase: base,
     };
     await Promise.all(staffUserIds.map((id) => this.sendToUser(id, payload)));
   }
 
-  async notifyRequestUpdate(requesterId: string, request: RequestDto): Promise<void> {
+  async notifyRequestUpdate(requesterId: string, request: RequestDto, apiBase?: string): Promise<void> {
     const label = STATUS_LABEL[request.status] ?? request.status;
     const staffName = request.staff?.name;
     const payload: PushPayload = {
@@ -91,19 +93,19 @@ export class PushService implements OnModuleInit {
       body: staffName ? `${staffName} updated your request` : 'Your request was updated',
       url: `/requests/${request.id}`,
       requestId: request.id,
-      apiBase: this.apiBase,
+      apiBase: apiBase ?? this.apiBase,
     };
     await this.sendToUser(requesterId, payload);
   }
 
-  async notifyNote(note: RequestNoteDto, recipientId: string): Promise<void> {
+  async notifyNote(note: RequestNoteDto, recipientId: string, apiBase?: string): Promise<void> {
     const payload: PushPayload = {
       type: 'request:note',
       title: `💬 ${note.author.name}`,
       body: note.message,
       url: `/requests/${note.requestId}`,
       requestId: note.requestId,
-      apiBase: this.apiBase,
+      apiBase: apiBase ?? this.apiBase,
     };
     await this.sendToUser(recipientId, payload);
   }

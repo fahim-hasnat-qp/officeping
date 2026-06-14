@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { useSocketStatus } from '@/hooks/useSocketStatus';
+import { useAuthStore } from '@/store/authStore';
 import Icon from '@/components/Icon';
+import NotificationPrompt from '@/components/NotificationPrompt';
 
 interface AppShellProps {
   readonly children: ReactNode;
@@ -8,6 +10,7 @@ interface AppShellProps {
 
 export default function AppShell({ children }: AppShellProps) {
   const connected = useSocketStatus();
+  const { accessToken } = useAuthStore();
 
   return (
     <div
@@ -29,7 +32,8 @@ export default function AppShell({ children }: AppShellProps) {
       // top/bottom radius when not filling the full viewport width.
       className="app-shell"
     >
-      {!connected && (
+      {accessToken && <NotificationPrompt />}
+      {accessToken && !connected && (
         <div
           style={{
             height: 26,

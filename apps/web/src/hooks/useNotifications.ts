@@ -15,36 +15,50 @@ function getAudioCtx(): AudioContext | null {
   return audioCtx;
 }
 
-function playTone(frequency: number, durationMs: number, gain = 0.25, type: OscillatorType = 'sine') {
+async function resumeCtx(): Promise<AudioContext | null> {
   const ctx = getAudioCtx();
-  if (!ctx) return;
+  if (!ctx) return null;
+  if (ctx.state === 'suspended') await ctx.resume();
+  return ctx;
+}
+
+function playTone(ctx: AudioContext, frequency: number, startAt: number, durationMs: number, gain = 0.6, type: OscillatorType = 'sine') {
   const osc = ctx.createOscillator();
   const gainNode = ctx.createGain();
   osc.connect(gainNode);
   gainNode.connect(ctx.destination);
   osc.type = type;
-  osc.frequency.setValueAtTime(frequency, ctx.currentTime);
-  gainNode.gain.setValueAtTime(gain, ctx.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + durationMs / 1000);
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + durationMs / 1000);
+  osc.frequency.setValueAtTime(frequency, startAt);
+  gainNode.gain.setValueAtTime(gain, startAt);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, startAt + durationMs / 1000);
+  osc.start(startAt);
+  osc.stop(startAt + durationMs / 1000);
 }
 
-function soundDing() {
-  // Soft single ding — status update for member
-  playTone(880, 300, 0.2);
+async function soundAlarm() {
+  // Loud repeating alarm — new request for staff
+  const ctx = await resumeCtx();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const seq = [880, 1100, 880, 1100, 880, 1100];
+  seq.forEach((freq, i) => {
+    playTone(ctx, freq, t + i * 0.18, 160, 0.8, 'square');
+  });
 }
 
-function soundAlert() {
-  // Two-tone alert — new request for staff
-  playTone(660, 150, 0.25);
-  setTimeout(() => playTone(880, 200, 0.25), 160);
+async function soundDing() {
+  const ctx = await resumeCtx();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  playTone(ctx, 880, t, 300, 0.5);
 }
 
-function soundSuccess() {
-  // Rising two-note chord — request done
-  playTone(523, 200, 0.2);
-  setTimeout(() => playTone(783, 300, 0.2), 120);
+async function soundSuccess() {
+  const ctx = await resumeCtx();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  playTone(ctx, 523, t, 200, 0.5);
+  playTone(ctx, 783, t + 0.13, 300, 0.5);
 }
 
 const STATUS_LABEL: Partial<Record<RequestStatus, string>> = {
@@ -57,6 +71,16 @@ const STATUS_LABEL: Partial<Record<RequestStatus, string>> = {
 function vibrate(pattern: number[]) {
   if ('vibrate' in navigator) navigator.vibrate(pattern);
 }
+
+// Unlock AudioContext on first user gesture so sounds work on mobile
+function unlockAudio() {
+  const ctx = getAudioCtx();
+  if (ctx?.state === 'suspended') ctx.resume().catch(() => null);
+  document.removeEventListener('touchstart', unlockAudio);
+  document.removeEventListener('click', unlockAudio);
+}
+document.addEventListener('touchstart', unlockAudio, { passive: true });
+document.addEventListener('click', unlockAudio);
 
 export function useNotifications() {
   const { user } = useAuthStore();
@@ -73,8 +97,8 @@ export function useNotifications() {
     // ── Staff: incoming new request ─────────────────────────────────────────
     function onRequestNew(req: RequestNewEvent) {
       if (!isStaff) return;
-      vibrate([100, 50, 100]);
-      soundAlert();
+      vibrate([300, 100, 300, 100, 300, 100, 300]);
+      soundAlarm();
       push({
         title: 'New request',
         body: `${req.requester.name}: ${req.description}`,
@@ -129,6 +153,8 @@ export function useNotifications() {
       if (!latest || latest.author.id === user?.id) return; // don't notify yourself
 
       appendNote(event.requestId, latest);
+      vibrate([100, 50, 100]);
+      soundDing();
       push({
         title: `Note from ${latest.author.name}`,
         body: latest.message,

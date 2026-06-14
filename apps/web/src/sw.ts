@@ -2,24 +2,36 @@
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
 import type { PushPayload, SwForwardedMessage } from '@officeping/shared';
 
-declare const self: ServiceWorkerGlobalScope;
+declare const self: ServiceWorkerGlobalScope & { __token?: string };
+
+// Receive auth token from the page so we can use it in background fetches
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SET_TOKEN') {
+    self.__token = event.data.token as string;
+  }
+});
 
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
 self.addEventListener('push', (event) => {
   const payload = event.data?.json() as PushPayload;
+  console.log('[SW] push received', payload);
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      // App is open and visible — forward to the page instead of showing OS notification
-      const focused = clients.find((c) => c.visibilityState === 'visible');
-      if (focused) {
+      console.log('[SW] clients:', clients.map(c => ({ url: c.url, focused: c.focused, visibility: c.visibilityState })));
+
+      // Always forward to any visible page so in-app toast fires
+      const visible = clients.find((c) => c.visibilityState === 'visible');
+      if (visible) {
+        console.log('[SW] forwarding to visible page');
         const msg: SwForwardedMessage = { source: 'officeping-sw', payload };
-        focused.postMessage(msg);
-        return;
+        visible.postMessage(msg);
       }
 
+      // Always show OS notification regardless — let the OS deduplicate if app is foreground
+      console.log('[SW] showing OS notification');
       const isNewRequest = payload.type === 'request:new';
 
       const options: NotificationOptions = {
@@ -29,7 +41,7 @@ self.addEventListener('push', (event) => {
         tag: payload.requestId ?? payload.type,
         renotify: true,
         vibrate: isNewRequest ? [200, 100, 200, 100, 200] : [150, 75, 150],
-        data: { url: payload.url, requestId: payload.requestId, apiBase: payload.apiBase },
+        data: { url: payload.url, fullUrl: payload.fullUrl, requestId: payload.requestId, apiBase: payload.apiBase },
         silent: false,
       };
 
@@ -41,7 +53,9 @@ self.addEventListener('push', (event) => {
         options.requireInteraction = true;
       }
 
-      return self.registration.showNotification(payload.title, options);
+      return self.registration.showNotification(payload.title, options)
+        .then(() => console.log('[SW] showNotification called successfully'))
+        .catch((err) => console.error('[SW] showNotification failed:', err));
     }),
   );
 });
@@ -49,33 +63,28 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const data = event.notification.data as { url: string; requestId?: string; apiBase?: string };
+  const data = event.notification.data as { url: string; fullUrl?: string; requestId?: string; apiBase?: string };
   const action = event.action;
 
-  if ((action === 'accept' || action === 'reject') && data.requestId && data.apiBase) {
-    const status = action === 'accept' ? 'ACCEPTED' : 'CANCELLED';
-    const url = `${data.apiBase}/api/requests/${data.requestId}/status`;
-
+  // For accept/reject actions, open the request page — user can act from there
+  if ((action === 'accept' || action === 'reject') && data.fullUrl) {
     event.waitUntil(
-      fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-        credentials: 'include',
-      }).catch(() => {
-        // If fetch fails (e.g. no auth cookie in SW context), open the request page instead
-        return self.clients.openWindow(data.url);
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        const existing = clients.find((c) => c.url.includes(data.requestId ?? ''));
+        if (existing) return existing.focus();
+        return self.clients.openWindow(data.fullUrl);
       }),
     );
     return;
   }
 
   // Default: open or focus the relevant page
+  const targetUrl = data.fullUrl ?? data.url;
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      const existing = clients.find((c) => c.url.includes(data.url));
+      const existing = clients.find((c) => c.url.includes(data.requestId ?? data.url));
       if (existing) return existing.focus();
-      return self.clients.openWindow(data.url);
+      return self.clients.openWindow(targetUrl);
     }),
   );
 });

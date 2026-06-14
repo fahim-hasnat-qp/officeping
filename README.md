@@ -140,7 +140,28 @@ Open `https://localhost`, accept the self-signed certificate warning once, and c
 
 ### Push notifications on a physical device
 
-Access the app from your phone on the same network via `https://<your-machine-ip>`. Accept the cert warning on the device — push notifications will work from that point.
+Chrome on Android (and all browsers on iOS) block PWA install and Web Push on self-signed certificates — even if you tap "proceed anyway". To test push notifications and install the PWA on a real device you need a trusted HTTPS URL, which requires tunneling.
+
+**Cloudflare Tunnel (recommended — free, no account needed):**
+
+```bash
+# Install once
+brew install cloudflared   # macOS
+# or: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/
+
+# Run while docker compose is up — point at the nginx gateway
+cloudflared tunnel --url https://localhost:443 --no-tls-verify
+```
+
+Cloudflare prints a URL like `https://random-words.trycloudflare.com`. Open that URL on your phone — push notifications and PWA install will work.
+
+> **Note:** The tunnel must stay running in a separate terminal while you test. Stop it with `Ctrl+C` when done.
+
+**ngrok (alternative):**
+
+```bash
+ngrok http https://localhost:443 --host-header=localhost
+```
 
 ### Useful Docker commands
 

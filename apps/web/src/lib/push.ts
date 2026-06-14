@@ -1,12 +1,12 @@
 export function isPushSupported() {
-  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  return 'serviceWorker' in navigator && 'PushManager' in globalThis && 'Notification' in globalThis;
 }
 
 export function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const raw = atob(base64);
-  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+  return Uint8Array.from([...raw].map((c) => c.codePointAt(0) ?? 0));
 }
 
 export async function registerPush(): Promise<boolean> {
@@ -14,7 +14,7 @@ export async function registerPush(): Promise<boolean> {
   console.log('[Push] registerPush called', {
     vapidKey: vapidKey ? `${vapidKey.slice(0, 10)}…` : 'MISSING',
     supported: isPushSupported(),
-    permission: 'Notification' in window ? Notification.permission : 'API unavailable',
+    permission: 'Notification' in globalThis ? Notification.permission : 'API unavailable',
     swAvailable: 'serviceWorker' in navigator,
   });
 
@@ -33,6 +33,20 @@ export async function registerPush(): Promise<boolean> {
   const reg = await navigator.serviceWorker.ready;
   console.log('[Push] SW ready, active:', reg.active?.state);
 
+  // Wait for the SW to fully activate before subscribing — pushManager.subscribe
+  // throws AbortError if called while the SW is still in 'activating' state
+  if (reg.active && reg.active.state !== 'activated') {
+    await new Promise<void>((resolve) => {
+      reg.active!.addEventListener('statechange', function handler(e) {
+        if ((e.target as ServiceWorker).state === 'activated') {
+          reg.active!.removeEventListener('statechange', handler);
+          resolve();
+        }
+      });
+    });
+    console.log('[Push] SW now activated');
+  }
+
   let sub: PushSubscription;
   try {
     sub = await reg.pushManager.subscribe({
@@ -41,7 +55,6 @@ export async function registerPush(): Promise<boolean> {
     });
   } catch (err) {
     console.error('[Push] pushManager.subscribe failed:', err);
-    // If existing sub has a different key, unsubscribe and retry once
     const existing = await reg.pushManager.getSubscription();
     if (existing) {
       console.log('[Push] Stale subscription found, unsubscribing and retrying…');

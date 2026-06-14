@@ -24,6 +24,8 @@ export interface PushPayload {
   body: string;
   /** In-app path to open on notification click, e.g. /requests/<id> */
   url: string;
+  /** Full URL including origin, e.g. https://xyz.trycloudflare.com/requests/<id> */
+  fullUrl?: string;
   requestId?: string;
   /** API base URL so the SW can call PATCH /requests/:id/status directly */
   apiBase?: string;

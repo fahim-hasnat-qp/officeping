@@ -6,6 +6,7 @@ import { connectSocket, disconnectSocket } from '@/lib/socket';
 import { useAuthStore } from '@/store/authStore';
 import { useLiveCount } from '@/hooks/useLiveCount';
 import { useNotifications } from '@/hooks/useNotifications';
+import { registerPush } from '@/lib/push';
 import Toast from '@/components/Toast';
 import NotificationStack from '@/components/NotificationStack';
 
@@ -36,7 +37,14 @@ function AppRoutes() {
   useLiveCount();
 
   useEffect(() => {
-    if (accessToken) connectSocket(accessToken);
+    if (accessToken) {
+      connectSocket(accessToken);
+      registerPush().catch(() => null);
+      // Send token to SW so it can use it for Accept/Reject action fetches
+      navigator.serviceWorker.ready.then((reg) => {
+        reg.active?.postMessage({ type: 'SET_TOKEN', token: accessToken });
+      }).catch(() => null);
+    }
     return () => disconnectSocket();
   }, [accessToken]);
 

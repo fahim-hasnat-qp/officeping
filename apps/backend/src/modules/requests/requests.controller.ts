@@ -7,10 +7,18 @@ import {
   Patch,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { RequestDto, RequestNoteDto } from '@officeping/shared';
 import { AuthUser } from '../../common/auth-user';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+
+function originFromReq(req: ExpressRequest): string {
+  const proto = (req.headers['x-forwarded-proto'] as string | undefined) ?? 'https';
+  const host = (req.headers['x-forwarded-host'] as string | undefined) ?? req.headers.host ?? 'localhost';
+  return `${proto}://${host}`;
+}
 import {
   CreateNoteDto,
   CreateRequestDto,
@@ -29,8 +37,9 @@ export class RequestsController {
   create(
     @CurrentUser() user: AuthUser,
     @Body() body: CreateRequestDto,
+    @Req() req: ExpressRequest,
   ): Promise<RequestDto> {
-    return this.service.create(user, body);
+    return this.service.create(user, body, originFromReq(req));
   }
 
   @Get()
@@ -59,8 +68,9 @@ export class RequestsController {
     @Param('id') id: string,
     @CurrentUser() user: AuthUser,
     @Body() body: UpdateRequestStatusDto,
+    @Req() req: ExpressRequest,
   ): Promise<RequestDto> {
-    return this.service.updateStatus(id, user, body);
+    return this.service.updateStatus(id, user, body, originFromReq(req));
   }
 
   @Patch(':id/delay')
@@ -104,8 +114,9 @@ export class RequestsController {
     @Param('id') id: string,
     @CurrentUser() user: AuthUser,
     @Body() body: CreateNoteDto,
+    @Req() req: ExpressRequest,
   ): Promise<RequestNoteDto> {
-    const { note } = await this.service.addNote(id, user, body);
+    const { note } = await this.service.addNote(id, user, body, originFromReq(req));
     return note;
   }
 }

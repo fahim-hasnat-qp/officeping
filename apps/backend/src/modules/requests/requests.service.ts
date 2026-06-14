@@ -45,7 +45,7 @@ export class RequestsService {
     private readonly push: PushService,
   ) {}
 
-  async create(user: AuthUser, input: CreateRequestDto): Promise<RequestDto> {
+  async create(user: AuthUser, input: CreateRequestDto, apiBase?: string): Promise<RequestDto> {
     const request = await this.requests.save(
       this.requests.create({
         requesterId: user.id,
@@ -69,7 +69,7 @@ export class RequestsService {
         select: ['id'],
       })
     ).map((s) => s.id);
-    await this.push.notifyNewRequest(dto, allStaffIds);
+    await this.push.notifyNewRequest(dto, allStaffIds, apiBase);
 
     return dto;
   }
@@ -142,6 +142,7 @@ export class RequestsService {
     id: string,
     user: AuthUser,
     input: UpdateRequestStatusDto,
+    apiBase?: string,
   ): Promise<RequestDto> {
     // Use pessimistic lock for PENDING → ACCEPTED to prevent double-accept
     const isPendingToAccepted =
@@ -191,8 +192,8 @@ export class RequestsService {
       staff: dto.staff,
     };
 
-    this.realtime.emitRequestUpdate(loaded.requesterId, id, event);
-    await this.push.notifyRequestUpdate(loaded.requesterId, dto);
+    this.realtime.emitRequestUpdate(loaded.requesterId, id, event, loaded.staffId);
+    await this.push.notifyRequestUpdate(loaded.requesterId, dto, apiBase);
 
     return dto;
   }
@@ -216,7 +217,7 @@ export class RequestsService {
       delayReason: input.reason,
     };
 
-    this.realtime.emitRequestUpdate(loaded.requesterId, id, event);
+    this.realtime.emitRequestUpdate(loaded.requesterId, id, event, loaded.staffId);
     await this.push.notifyRequestUpdate(loaded.requesterId, dto);
 
     return dto;
@@ -247,7 +248,7 @@ export class RequestsService {
       cancelReason: input.reason,
     };
 
-    this.realtime.emitRequestUpdate(loaded.requesterId, id, event);
+    this.realtime.emitRequestUpdate(loaded.requesterId, id, event, loaded.staffId);
     await this.push.notifyRequestUpdate(loaded.requesterId, dto);
 
     return dto;
@@ -257,6 +258,7 @@ export class RequestsService {
     id: string,
     user: AuthUser,
     input: CreateNoteDto,
+    apiBase?: string,
   ): Promise<{ note: ReturnType<typeof toNoteDto>; requestDto: RequestDto }> {
     const request = await this.requests.findOne({ where: { id } });
     if (!request) throw new NotFoundException('Request not found');
@@ -296,7 +298,7 @@ export class RequestsService {
       recipientId = request.requesterId;
     }
     if (recipientId) {
-      await this.push.notifyNote(noteDto, recipientId);
+      await this.push.notifyNote(noteDto, recipientId, apiBase);
     }
 
     const requestDto = await this.findOne(id, user);
@@ -307,7 +309,7 @@ export class RequestsService {
       status: request.status,
       staff: requestDto.staff ?? null,
       notes: requestDto.notes ?? [],
-    });
+    }, request.staffId);
 
     return { note: noteDto, requestDto };
   }
