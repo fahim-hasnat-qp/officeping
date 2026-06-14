@@ -31,9 +31,9 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html, body, #root {
+html, body {
   height: 100%;
-  background: var(--surface);
+  background: #2A2520;
   color: var(--ink);
   font-family: var(--font-sans);
   font-size: 15px;
@@ -42,6 +42,23 @@ html, body, #root {
   text-rendering: optimizeLegibility;
 }
 
+#root {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
 /* scrollbars invisible but functional */
 ::-webkit-scrollbar { display: none; }
 * { scrollbar-width: none; }
+
+/* Phone frame on desktop — rounded corners only when not filling full width */
+@media (min-width: 391px) {
+  .app-shell {
+    border-radius: 40px;
+    min-height: calc(100svh - 48px);
+    margin: 24px 0;
+    overflow: hidden;
+  }
+}

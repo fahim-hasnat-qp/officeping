@@ -12,12 +12,16 @@ export default defineConfig({
       filename: 'sw.ts',
       registerType: 'autoUpdate',
       manifest: {
-        name: 'DingDong',
-        short_name: 'DingDong',
+        name: 'OfficePing',
+        short_name: 'OfficePing',
+        description: 'Internal office request system',
         theme_color: '#1A1714',
         background_color: '#F7F5F1',
         display: 'standalone',
+        orientation: 'portrait',
+        scope: '/',
         start_url: '/',
+        id: '/',
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
