@@ -20,7 +20,7 @@ A warm, fast, frictionless internal office request system. Staff receive instant
 
 ### For Staff
 - **Live request feed** — new requests appear instantly on the home screen
-- **Accept / Reject from push notification** — actionable OS notification buttons; no need to open the app
+- **Accept / Reject from push notification** — actionable OS notification buttons that open the request directly for one-tap action
 - **Request management** — accept, start, complete, or cancel requests; add delay reasons
 - **Meals dashboard** — see all breakfast and lunch orders for the day at a glance
 - **Compliment feed** — live feed of compliments received; appears on home screen in real time
@@ -108,9 +108,9 @@ Request created
       │
       └── Web Push → staff push subscriptions (background, device-level)
                └── Service Worker
-                     ├── App open  → postMessage to page (already handled by socket)
+                     ├── App open  → postMessage to page + show OS notification
                      └── App closed → OS notification with Accept / Reject action buttons
-                                           └── action click → PATCH /api/requests/:id/status
+                                           └── action click → opens request detail page
 ```
 
 ---

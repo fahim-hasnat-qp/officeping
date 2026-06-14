@@ -87,25 +87,29 @@ export class PushService implements OnModuleInit {
   async notifyRequestUpdate(requesterId: string, request: RequestDto, apiBase?: string): Promise<void> {
     const label = STATUS_LABEL[request.status] ?? request.status;
     const staffName = request.staff?.name;
+    const base = apiBase ?? this.apiBase;
     const payload: PushPayload = {
       type: 'request:update',
       title: `Request ${label}`,
       body: staffName ? `${staffName} updated your request` : 'Your request was updated',
       url: `/requests/${request.id}`,
+      fullUrl: `${base}/requests/${request.id}`,
       requestId: request.id,
-      apiBase: apiBase ?? this.apiBase,
+      apiBase: base,
     };
     await this.sendToUser(requesterId, payload);
   }
 
   async notifyNote(note: RequestNoteDto, recipientId: string, apiBase?: string): Promise<void> {
+    const base = apiBase ?? this.apiBase;
     const payload: PushPayload = {
       type: 'request:note',
       title: `💬 ${note.author.name}`,
       body: note.message,
       url: `/requests/${note.requestId}`,
+      fullUrl: `${base}/requests/${note.requestId}`,
       requestId: note.requestId,
-      apiBase: apiBase ?? this.apiBase,
+      apiBase: base,
     };
     await this.sendToUser(recipientId, payload);
   }
@@ -116,6 +120,7 @@ export class PushService implements OnModuleInit {
       title: '⭐ You got a compliment!',
       body: compliment.message,
       url: `/requests/${compliment.requestId}`,
+      fullUrl: `${this.apiBase}/requests/${compliment.requestId}`,
       requestId: compliment.requestId,
       apiBase: this.apiBase,
     };
