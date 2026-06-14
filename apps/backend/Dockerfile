@@ -3,7 +3,7 @@ RUN npm i -g pnpm@10
 
 FROM base AS deps
 WORKDIR /app
-COPY package.json pnpm-workspace.yaml .npmrc ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/backend/package.json apps/backend/
 RUN pnpm install --frozen-lockfile
@@ -21,7 +21,7 @@ RUN pnpm --filter @officeping/backend build
 FROM node:20-alpine AS runtime
 WORKDIR /app
 RUN npm i -g pnpm@10
-COPY package.json pnpm-workspace.yaml .npmrc ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/backend/package.json apps/backend/
 RUN pnpm install --prod --frozen-lockfile

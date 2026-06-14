@@ -128,6 +128,18 @@ importers:
       socket.io-client:
         specifier: ^4.7.5
         version: 4.8.3
+      workbox-build:
+        specifier: ^7.4.1
+        version: 7.4.1(@types/babel__core@7.20.5)
+      workbox-core:
+        specifier: ^7.4.1
+        version: 7.4.1
+      workbox-precaching:
+        specifier: ^7.4.1
+        version: 7.4.1
+      workbox-window:
+        specifier: ^7.4.1
+        version: 7.4.1
       zustand:
         specifier: ^4.5.2
         version: 4.5.7(@types/react@18.3.31)(react@18.3.1)
