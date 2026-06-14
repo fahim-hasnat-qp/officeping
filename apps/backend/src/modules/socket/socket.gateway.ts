@@ -20,16 +20,7 @@ import { Request } from '../../entities';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.NODE_ENV !== 'production'
-      ? true  // allow all origins in dev/ngrok
-      : (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
-          const allowed = [process.env.WEB_ORIGIN, 'http://localhost:5173'].filter(Boolean);
-          if (!origin || allowed.includes(origin)) {
-            cb(null, true);
-          } else {
-            cb(new Error('Not allowed by CORS'));
-          }
-        },
+    origin: true,
     credentials: true,
   },
 })

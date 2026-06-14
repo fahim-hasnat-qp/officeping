@@ -8,9 +8,7 @@ async function bootstrap(): Promise<void> {
 
   app.setGlobalPrefix('api');
 
-  const origins = corsOrigins();
-  const isWildcard = origins === '*';
-  app.enableCors({ origin: origins, credentials: !isWildcard });
+  app.enableCors({ origin: corsOrigins(), credentials: true });
 
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, transform: true }),
