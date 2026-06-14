@@ -135,7 +135,8 @@ cp .env.example .env
 # 3. Build and start everything
 docker compose up --build
 
-# App is now running at http://localhost
+# App is now running at https://localhost
+# (accept the self-signed certificate warning in your browser once)
 ```
 
 That's it. Docker Compose starts PostgreSQL, Redis, the NestJS backend (with automatic migrations on startup), the React frontend, and nginx as the gateway — all in one command.
@@ -182,11 +183,7 @@ VAPID_PUBLIC_KEY=<your public key>
 VAPID_PRIVATE_KEY=<your private key>
 ```
 
-> **Note:** Push notifications require HTTPS in production. For local testing on a physical device, use a tunnel:
-> ```bash
-> npx cloudflared tunnel --url http://localhost
-> ```
-> Update `API_BASE_URL` and `WEB_ORIGIN` in `.env` to the tunnel URL, then rebuild.
+> **Note:** The Docker setup serves HTTPS on port 443 with a self-signed certificate (generated at build time). Browsers will show a security warning — click "Advanced → Proceed" once and push notifications will work. For testing on a physical device on the same network, access via `https://<your-machine-ip>` and accept the cert on the device too.
 
 ### Useful Docker commands
 
