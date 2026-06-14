@@ -119,71 +119,28 @@ Request created
 
 ### Prerequisites
 - Docker and Docker Compose v2
-- A Google Cloud OAuth 2.0 Web Client ID (optional — see Demo Mode below)
 
 ### Quick start
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/fahimhasnat/officeping.git
+git clone https://github.com/fahim-hasnat-qp/officeping.git
 cd officeping
-
-# 2. Copy and configure environment
-cp .env.example .env
-# Edit .env — at minimum set GOOGLE_CLIENT_ID or leave DEMO_MODE=true
-
-# 3. Build and start everything
 docker compose up --build
-
-# App is now running at https://localhost
-# (accept the self-signed certificate warning in your browser once)
 ```
 
-That's it. Docker Compose starts PostgreSQL, Redis, the NestJS backend (with automatic migrations on startup), the React frontend, and nginx as the gateway — all in one command.
+Open `https://localhost`, accept the self-signed certificate warning once, and click **Demo Login**. No configuration needed — the repo includes a ready-to-use `.env` with VAPID keys, demo accounts, and HTTPS configured.
 
-### Environment variables
+### Demo accounts
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `GOOGLE_CLIENT_ID` | Yes (or Demo Mode) | — | Google OAuth 2.0 Web Client ID |
-| `ALLOWED_EMAIL_DOMAIN` | No | `questionpro.com` | Only emails from this domain can log in |
-| `ADMIN_EMAILS` | No | — | Comma-separated emails to seed as admin on first login |
-| `JWT_SECRET` | Yes (production) | `dev_secret_change_me` | Random string, min 32 chars |
-| `DB_USER` | No | `officeping` | PostgreSQL username |
-| `DB_PASSWORD` | No | `officeping` | PostgreSQL password |
-| `DB_NAME` | No | `officeping` | PostgreSQL database name |
-| `DEMO_MODE` | No | `true` | Enables `/auth/demo-login` with seeded demo accounts |
-| `VAPID_PUBLIC_KEY` | No | — | VAPID public key for Web Push |
-| `VAPID_PRIVATE_KEY` | No | — | VAPID private key for Web Push |
-| `VAPID_SUBJECT` | No | `mailto:admin@officeping.local` | VAPID contact URI |
-| `API_BASE_URL` | No | `http://localhost` | Public base URL (used in push notification action callbacks) |
-| `WEB_ORIGIN` | No | `http://localhost` | Frontend origin for CORS |
+| Role | Login as |
+|---|---|
+| Member | Demo Login → Alex Member |
+| Staff | Demo Login → Sam Staff |
+| Admin | Demo Login → Admin User |
 
-### Demo Mode
+### Push notifications on a physical device
 
-With `DEMO_MODE=true` (the default), the login page shows a **Demo Login** button that creates/returns pre-seeded accounts without Google OAuth:
-
-| Role | Name | Notes |
-|---|---|---|
-| Member | Alex Member | Regular employee account |
-| Staff | Sam Staff | Can accept and manage requests |
-| Admin | Admin User | Has access to the Manage page |
-
-### Generating VAPID keys for push notifications
-
-Web Push notifications require VAPID keys. Generate a pair:
-
-```bash
-npx web-push generate-vapid-keys
-```
-
-Copy the output into your `.env`:
-```
-VAPID_PUBLIC_KEY=<your public key>
-VAPID_PRIVATE_KEY=<your private key>
-```
-
-> **Note:** The Docker setup serves HTTPS on port 443 with a self-signed certificate (generated at build time). Browsers will show a security warning — click "Advanced → Proceed" once and push notifications will work. For testing on a physical device on the same network, access via `https://<your-machine-ip>` and accept the cert on the device too.
+Access the app from your phone on the same network via `https://<your-machine-ip>`. Accept the cert warning on the device — push notifications will work from that point.
 
 ### Useful Docker commands
 
@@ -192,19 +149,13 @@ VAPID_PRIVATE_KEY=<your private key>
 docker compose up -d --build
 
 # View logs
-docker compose logs -f
-
-# View backend logs only
 docker compose logs -f backend
 
-# Stop everything (next up will start completely fresh)
+# Stop (next up starts completely fresh)
 docker compose down
-
-# Rebuild a single service after code changes
-docker compose build backend && docker compose up -d backend
 ```
 
-> **Fresh on every start:** PostgreSQL and Redis use `tmpfs` (RAM-only storage), so all data is wiped the moment containers stop. Every `docker compose up` starts from a clean database — migrations run automatically and demo seed data is re-inserted.
+> **Fresh on every start:** PostgreSQL and Redis use `tmpfs` (RAM-only). Every `docker compose up` starts from a clean database — migrations run automatically, demo seed re-inserts.
 
 ---
 
@@ -225,10 +176,9 @@ pnpm install
 # Build the shared package first
 pnpm --filter @officeping/shared build
 
-# Copy env files
-cp .env.example apps/backend/.env
-cp apps/web/.env.example apps/web/.env.local
-# Edit both files with your values
+# Copy the root .env for local backend use
+cp .env apps/backend/.env
+# Edit apps/backend/.env — change DATABASE_URL and REDIS_URL to localhost
 
 # Run database migrations
 pnpm --filter @officeping/backend migration:run
@@ -265,5 +215,5 @@ officeping/
 │   └── shared/           # @officeping/shared — types, enums, DTOs shared by both apps
 ├── docker-compose.yml
 ├── nginx.conf
-└── .env.example
+└── .env
 ```

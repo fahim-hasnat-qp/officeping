@@ -2,10 +2,9 @@ node_modules/
 dist/
 dev-dist/
 
-# Environment — never commit real secrets
-.env
-.env.local
-.env.*.local
+# Local dev overrides — not needed for Docker
+apps/backend/.env
+apps/web/.env.local
 
 # macOS
 .DS_Store
