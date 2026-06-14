@@ -1,0 +1,23 @@
+{
+  "name": "officeping",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev:backend": "pnpm --filter @officeping/backend dev",
+    "dev:web": "pnpm --filter @officeping/web dev",
+    "lint": "pnpm -r lint",
+    "test": "pnpm --filter @officeping/backend test",
+    "test:cov": "pnpm --filter @officeping/backend test:cov"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "esbuild"
+    ]
+  }
+}

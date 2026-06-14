@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');
+
+:root {
+  --ink:        #1A1714;
+  --ink2:       #3D3830;
+  --ink3:       #7A7369;
+  --surface:    #F7F5F1;
+  --surface2:   #EDE9E3;
+  --surface3:   #DDD8CF;
+  --card:       #FFFFFF;
+  --gold:       #B07D2E;
+  --gold-light: #F5E8CC;
+  --green:      #2D6A4F;
+  --red:        #9B2335;
+  --blue:       #1B4F8A;
+
+  --st-pending-bg:  #F4E7C8; --st-pending-fg:  #8A6420;
+  --st-accepted-bg: #E2EAF4; --st-accepted-fg: #1B4F8A;
+  --st-progress-bg: #E7E5F2; --st-progress-fg: #3C3A86;
+  --st-done-bg:     #DCE9E0; --st-done-fg:     #2D6A4F;
+  --st-cancel-bg:   #ECE8E1; --st-cancel-fg:   #8A837A;
+  --st-delay-bg:    #F5E5D1; --st-delay-fg:    #A35E1C;
+
+  --font-sans: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+  --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* scrollbars invisible but functional */
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }
