@@ -200,15 +200,14 @@ docker compose logs -f
 # View backend logs only
 docker compose logs -f backend
 
-# Stop everything
+# Stop everything (next up will start completely fresh)
 docker compose down
-
-# Stop and wipe all data (database + redis)
-docker compose down -v
 
 # Rebuild a single service after code changes
 docker compose build backend && docker compose up -d backend
 ```
+
+> **Fresh on every start:** PostgreSQL and Redis use `tmpfs` (RAM-only storage), so all data is wiped the moment containers stop. Every `docker compose up` starts from a clean database — migrations run automatically and demo seed data is re-inserted.
 
 ---
 

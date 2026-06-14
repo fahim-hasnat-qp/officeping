@@ -4,9 +4,9 @@ services:
     container_name: officeping-redis
     ports:
       - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
+    tmpfs:
+      - /data
+    command: redis-server --appendonly no
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -22,8 +22,8 @@ services:
       POSTGRES_DB: ${DB_NAME:-officeping}
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    tmpfs:
+      - /var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-officeping}"]
       interval: 5s
@@ -82,7 +82,3 @@ services:
     depends_on:
       - backend
       - web
-
-volumes:
-  postgres_data:
-  redis_data:
